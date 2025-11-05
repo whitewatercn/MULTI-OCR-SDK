@@ -82,7 +82,8 @@ class OCRConfig:
 
         if self.min_output_threshold < 0:
             raise ConfigurationError(
-                f"min_output_threshold must be non-negative. Got: {self.min_output_threshold}"
+                f"min_output_threshold must be non-negative. "
+                f"Got: {self.min_output_threshold}"
             )
 
     @classmethod

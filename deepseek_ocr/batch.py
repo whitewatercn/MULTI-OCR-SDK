@@ -149,7 +149,8 @@ class BatchProcessor:
                 last_error = str(e)
                 if attempt < self.retry_count:
                     logger.warning(
-                        f"Attempt {attempt + 1} failed for {file_path.name}, retrying: {e}"
+                        f"Attempt {attempt + 1} failed for "
+                        f"{file_path.name}, retrying: {e}"
                     )
                     await asyncio.sleep(1)  # Brief delay before retry
                 else:
