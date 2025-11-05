@@ -1,0 +1,54 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      test_pypi:
+        description: 'Publish to TestPyPI instead of PyPI'
+        required: false
+        default: 'false'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install dependencies
+      run: |
+        uv sync --all-extras
+
+    - name: Build package
+      run: |
+        uv build
+
+    - name: Check package
+      run: |
+        uv run twine check dist/*
+
+    - name: Publish to TestPyPI
+      if: github.event.inputs.test_pypi == 'true'
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+      run: |
+        uv run twine upload --repository testpypi dist/*
+
+    - name: Publish to PyPI
+      if: github.event_name == 'release' && github.event.inputs.test_pypi != 'true'
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        uv run twine upload dist/*

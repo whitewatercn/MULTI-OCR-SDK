@@ -1,0 +1,78 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        version: "latest"
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        uv sync --all-extras
+
+    - name: Run tests
+      run: |
+        uv run pytest tests/ -v --cov=deepseek_ocr --cov-report=xml --cov-report=term
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install dependencies
+      run: |
+        uv sync --all-extras
+
+    - name: Run black
+      run: |
+        uv run black --check deepseek_ocr/
+
+    - name: Run isort
+      run: |
+        uv run isort --check-only deepseek_ocr/
+
+    - name: Run flake8
+      run: |
+        uv run flake8 deepseek_ocr/ --max-line-length=88 --extend-ignore=E203,W503
+
+    - name: Run mypy
+      run: |
+        uv run mypy deepseek_ocr/
