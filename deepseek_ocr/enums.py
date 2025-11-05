@@ -28,7 +28,6 @@ class OCRMode(Enum):
         - Simple documents: Use FREE_OCR
         - Complex tables (≥20 rows): Use GROUNDING
         - Simple tables (<10 rows): Use FREE_OCR (not GROUNDING)
-        - Chinese documents: Use FREE_OCR with chinese_hint=True
     """
 
     FREE_OCR = "free_ocr"

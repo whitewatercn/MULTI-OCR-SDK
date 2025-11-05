@@ -124,9 +124,6 @@ text = client.parse("invoice.pdf", mode="free_ocr")
 # Complex table
 text = client.parse("statement.pdf", mode="grounding")
 
-# Chinese document
-text = client.parse("chinese.pdf", mode="free_ocr", chinese_hint=True)
-
 # Custom DPI
 text = client.parse("document.pdf", dpi=300)
 ```
@@ -181,7 +178,6 @@ asyncio.run(batch_example())
 | Simple text (invoice, letter) | `FREE_OCR` | Fastest, 80% accuracy |
 | Complex tables (≥20 rows) | `GROUNDING` | Better structure preservation |
 | Simple tables (<10 rows) | `FREE_OCR` | Avoids truncation issues |
-| Chinese documents | `FREE_OCR` + `chinese_hint=True` | Best Chinese support |
 | Mixed content | `GROUNDING` | Handles complexity well |
 
 ### Configuration
@@ -418,9 +414,6 @@ text = client.parse("invoice.pdf", mode="free_ocr")
 # 复杂表格
 text = client.parse("statement.pdf", mode="grounding")
 
-# 中文文档
-text = client.parse("chinese.pdf", mode="free_ocr", chinese_hint=True)
-
 # 自定义 DPI
 text = client.parse("document.pdf", dpi=300)
 ```
@@ -475,7 +468,6 @@ asyncio.run(batch_example())
 | 简单文本（发票、信件） | `FREE_OCR` | 最快，80% 准确率 |
 | 复杂表格（≥20 行） | `GROUNDING` | 更好的结构保留 |
 | 简单表格（<10 行） | `FREE_OCR` | 避免截断问题 |
-| 中文文档 | `FREE_OCR` + `chinese_hint=True` | 最佳中文支持 |
 | 混合内容 | `GROUNDING` | 处理复杂性好 |
 
 ### 配置

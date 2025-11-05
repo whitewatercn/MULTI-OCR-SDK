@@ -137,21 +137,17 @@ class DeepSeekOCR:
         except Exception as e:
             raise FileProcessingError(f"Failed to process PDF: {e}") from e
 
-    def _build_prompt(self, mode: OCRMode, chinese_hint: bool) -> str:
+    def _build_prompt(self, mode: OCRMode) -> str:
         """
         Build the prompt for the API request.
 
         Args:
             mode: OCR mode to use.
-            chinese_hint: Whether to add Chinese language hint.
 
         Returns:
             Prompt string.
         """
-        prompt = mode.get_prompt()
-        if chinese_hint:
-            prompt += " Please extract all text in Chinese (中文) and English."
-        return prompt
+        return mode.get_prompt()
 
     def _clean_output(self, text: str) -> str:
         """
@@ -297,7 +293,6 @@ class DeepSeekOCR:
         file_path: Union[str, Path],
         mode: Union[str, OCRMode] = OCRMode.FREE_OCR,
         dpi: Optional[int] = None,
-        chinese_hint: bool = False,
     ) -> str:
         """
         Parse document asynchronously.
@@ -306,7 +301,6 @@ class DeepSeekOCR:
             file_path: Path to PDF or image file.
             mode: OCR mode ("free_ocr", "grounding", "ocr_image" or enum).
             dpi: DPI for PDF conversion. If None, uses config default.
-            chinese_hint: Add Chinese language hint for simple tables.
 
         Returns:
             Extracted text in Markdown format.
@@ -323,8 +317,7 @@ class DeepSeekOCR:
             >>> text = await client.parse_async(
             ...     "document.pdf",
             ...     mode="grounding",
-            ...     dpi=300,
-            ...     chinese_hint=True
+            ...     dpi=300
             ... )
         """
         # Convert mode string to enum if needed
@@ -340,7 +333,7 @@ class DeepSeekOCR:
         image_b64 = self._pdf_to_base64(file_path, dpi)
 
         # Build prompt
-        prompt = self._build_prompt(mode, chinese_hint)
+        prompt = self._build_prompt(mode)
 
         # Make API request
         result = await self._make_api_request_async(image_b64, prompt)
@@ -374,7 +367,6 @@ class DeepSeekOCR:
                 file_path,
                 mode=OCRMode(self.config.fallback_mode),
                 dpi=dpi,
-                chinese_hint=chinese_hint,
             )
 
         logger.info(f"Successfully processed {file_path}: {len(text)} chars")
@@ -385,7 +377,6 @@ class DeepSeekOCR:
         file_path: Union[str, Path],
         mode: Union[str, OCRMode] = OCRMode.FREE_OCR,
         dpi: Optional[int] = None,
-        chinese_hint: bool = False,
     ) -> str:
         """
         Parse document synchronously.
@@ -394,7 +385,6 @@ class DeepSeekOCR:
             file_path: Path to PDF or image file.
             mode: OCR mode ("free_ocr", "grounding", "ocr_image" or enum).
             dpi: DPI for PDF conversion. If None, uses config default.
-            chinese_hint: Add Chinese language hint for simple tables.
 
         Returns:
             Extracted text in Markdown format.
@@ -411,8 +401,7 @@ class DeepSeekOCR:
             >>> text = client.parse(
             ...     "document.pdf",
             ...     mode="grounding",
-            ...     dpi=300,
-            ...     chinese_hint=True
+            ...     dpi=300
             ... )
         """
         # Convert mode string to enum if needed
@@ -428,7 +417,7 @@ class DeepSeekOCR:
         image_b64 = self._pdf_to_base64(file_path, dpi)
 
         # Build prompt
-        prompt = self._build_prompt(mode, chinese_hint)
+        prompt = self._build_prompt(mode)
 
         # Make API request
         result = self._make_api_request_sync(image_b64, prompt)
@@ -462,7 +451,6 @@ class DeepSeekOCR:
                 file_path,
                 mode=OCRMode(self.config.fallback_mode),
                 dpi=dpi,
-                chinese_hint=chinese_hint,
             )
 
         logger.info(f"Successfully processed {file_path}: {len(text)} chars")

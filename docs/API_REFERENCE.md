@@ -57,7 +57,6 @@ def parse(
     file_path: Union[str, Path],
     mode: Union[str, OCRMode] = OCRMode.FREE_OCR,
     dpi: Optional[int] = None,
-    chinese_hint: bool = False
 ) -> str
 ```
 
@@ -68,7 +67,6 @@ Parse document synchronously.
 - `file_path` (str | Path): Path to PDF or image file.
 - `mode` (str | OCRMode): OCR mode ("free_ocr", "grounding", "ocr_image"). Defaults to FREE_OCR.
 - `dpi` (int, optional): DPI for PDF conversion. If None, uses config default.
-- `chinese_hint` (bool): Add Chinese language hint. Defaults to False.
 
 **Returns:**
 
@@ -93,8 +91,7 @@ text = client.parse("document.pdf")
 async def parse_async(
     file_path: Union[str, Path],
     mode: Union[str, OCRMode] = OCRMode.FREE_OCR,
-    dpi: Optional[int] = None,
-    chinese_hint: bool = False
+    dpi: Optional[int] = None
 ) -> str
 ```
 

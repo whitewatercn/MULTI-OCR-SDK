@@ -41,22 +41,8 @@ def main():
     except Exception as e:
         print(f"Error: {e}\n")
 
-    # Example 3: Chinese document with language hint
-    print("Example 3: Processing Chinese document with hint...")
-    try:
-        text = client.parse(
-            "sample_docs/chinese_document.pdf",
-            mode="free_ocr",
-            chinese_hint=True,  # Add Chinese language hint
-        )
-        print(f"Extracted text ({len(text)} chars):")
-        print(text[:500])
-        print("\n" + "=" * 60 + "\n")
-    except Exception as e:
-        print(f"Error: {e}\n")
-
-    # Example 4: Custom DPI for better quality
-    print("Example 4: Processing with custom DPI...")
+    # Example 3: Custom DPI for better quality
+    print("Example 3: Processing with custom DPI...")
     try:
         text = client.parse(
             "sample_docs/simple_document.pdf",
