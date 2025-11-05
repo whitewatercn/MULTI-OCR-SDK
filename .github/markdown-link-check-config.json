@@ -4,16 +4,13 @@
       "pattern": "^http://localhost"
     },
     {
-      "pattern": "^https://github.com/yourusername"
+      "pattern": "^https://github\\.com/yourusername"
     },
     {
-      "pattern": "^https://api.siliconflow.cn"
+      "pattern": "^https://api\\.siliconflow\\.cn"
     },
     {
-      "pattern": "^https://api.deepseek.com"
-    },
-    {
-      "pattern": "^https://api.test.com"
+      "pattern": "^https://api\\.deepseek\\.com"
     }
   ],
   "replacementPatterns": [],
