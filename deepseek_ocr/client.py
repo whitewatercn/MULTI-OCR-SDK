@@ -366,7 +366,8 @@ class DeepSeekOCR:
             and len(text) < self.config.min_output_threshold
         ):
             logger.warning(
-                f"Output too short ({len(text)} chars), falling back to {self.config.fallback_mode}"
+                f"Output too short ({len(text)} chars), "
+                f"falling back to {self.config.fallback_mode}"
             )
             return await self.parse_async(
                 file_path,
@@ -453,7 +454,8 @@ class DeepSeekOCR:
             and len(text) < self.config.min_output_threshold
         ):
             logger.warning(
-                f"Output too short ({len(text)} chars), falling back to {self.config.fallback_mode}"
+                f"Output too short ({len(text)} chars), "
+                f"falling back to {self.config.fallback_mode}"
             )
             return self.parse(
                 file_path,
