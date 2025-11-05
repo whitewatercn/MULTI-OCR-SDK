@@ -34,8 +34,10 @@ DeepSeekOCR(
 
 **Parameters:**
 
-- `api_key` (str, optional): API key for authentication. Defaults to `DS_OCR_API_KEY` environment variable.
-- `base_url` (str, optional): Base URL for the API endpoint. Defaults to `https://api.siliconflow.cn/v1/chat/completions`.
+- `api_key` (str, optional): API key for authentication. Defaults to `DS_OCR_API_KEY` environment variable. **Required** if not set in environment.
+- `base_url` (str, optional): Base URL for the API endpoint. Defaults to `DS_OCR_BASE_URL` environment variable. **Required** if not set in environment. Common providers:
+  - SiliconFlow: `https://api.siliconflow.cn/v1/chat/completions`
+  - DeepSeek Official: `https://api.deepseek.com/v1/chat/completions`
 - `model_name` (str, optional): Model name. Defaults to `deepseek-ai/DeepSeek-OCR`.
 - `timeout` (int, optional): Request timeout in seconds. Defaults to 60.
 - `max_tokens` (int, optional): Maximum tokens in response. Defaults to 4000.
@@ -180,7 +182,7 @@ Configuration dataclass for OCR client.
 ```python
 OCRConfig(
     api_key: str,
-    base_url: str = "https://api.siliconflow.cn/v1/chat/completions",
+    base_url: str,
     model_name: str = "deepseek-ai/DeepSeek-OCR",
     timeout: int = 60,
     max_tokens: int = 4000,
@@ -195,7 +197,9 @@ OCRConfig(
 **Attributes:**
 
 - `api_key` (str): API key (required).
-- `base_url` (str): API endpoint URL.
+- `base_url` (str): API endpoint URL (required). Choose your provider:
+  - SiliconFlow: `https://api.siliconflow.cn/v1/chat/completions`
+  - DeepSeek Official: `https://api.deepseek.com/v1/chat/completions`
 - `model_name` (str): Model name.
 - `timeout` (int): Request timeout in seconds.
 - `max_tokens` (int): Maximum tokens in response.
@@ -471,8 +475,8 @@ The SDK supports the following environment variables for configuration:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DS_OCR_API_KEY` | API key (required) | - |
-| `DS_OCR_BASE_URL` | API endpoint URL | `https://api.siliconflow.cn/v1/chat/completions` |
+| `DS_OCR_API_KEY` | API key | **Required** |
+| `DS_OCR_BASE_URL` | API endpoint URL | **Required** |
 | `DS_OCR_MODEL` | Model name | `deepseek-ai/DeepSeek-OCR` |
 | `DS_OCR_TIMEOUT` | Request timeout (seconds) | `60` |
 | `DS_OCR_MAX_TOKENS` | Maximum tokens | `4000` |
@@ -480,6 +484,10 @@ The SDK supports the following environment variables for configuration:
 | `DS_OCR_FALLBACK_ENABLED` | Enable fallback | `true` |
 | `DS_OCR_FALLBACK_MODE` | Fallback mode | `grounding` |
 | `DS_OCR_MIN_OUTPUT_THRESHOLD` | Min output length for fallback | `500` |
+
+**Note**: `DS_OCR_BASE_URL` must be set to your chosen API provider's endpoint. Common options:
+- SiliconFlow: `https://api.siliconflow.cn/v1/chat/completions`
+- DeepSeek Official: `https://api.deepseek.com/v1/chat/completions`
 
 ---
 

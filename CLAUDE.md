@@ -6,6 +6,139 @@
 
 - 流程图使用Mermaid格式
 
+## SubAgent 使用规范
+
+### 强制使用 SubAgent 的场景
+
+**为了保持主 Agent 的上下文不会爆炸，以下场景必须使用 SubAgent（Task tool）：**
+
+1. **长输出命令**
+   - 文件搜索：`find`, `grep` 递归搜索大量文件
+   - 日志输出：超过 100 行的命令输出
+   - 批量操作：处理多个文件的批量命令
+
+2. **探索性任务**
+   - 代码库结构分析
+   - 查找特定功能的实现位置
+   - 理解复杂的代码逻辑流程
+
+3. **重复性操作**
+   - 批量文件修改
+   - 多个测试文件的生成
+   - 大规模重构任务
+
+### SubAgent 使用示例
+
+```python
+# ❌ 错误：直接使用 Bash 进行大规模搜索
+Bash("find . -name '*.py' | xargs grep -l 'some_function'")
+
+# ✅ 正确：使用 SubAgent
+Task(
+    subagent_type="Explore",
+    description="Find Python files with some_function",
+    prompt="Search for all Python files that contain 'some_function' and explain what it does"
+)
+```
+
+### 经验教训
+
+**2025-01-05 教训：**
+- 在主 Agent 中直接运行大量测试和检查命令
+- 导致上下文快速增长，影响性能
+- 解决方案：将长输出任务委托给 SubAgent
+
+**重要提醒：**
+> 当预期命令输出超过 50 行时，优先考虑使用 SubAgent。
+> 这不仅节省 token，还能让主 Agent 专注于高层决策。
+
+## Git Commit 规范
+
+### ⚠️ 提交前强制检查
+
+**每次 commit 前必须完成以下检查，确保所有检查通过后才能提交：**
+
+#### 1. 本地代码质量检查
+
+```bash
+# 运行完整的 CI 检查流程
+uv run black --check deepseek_ocr/ tests/ && \
+uv run isort --check-only deepseek_ocr/ tests/ && \
+uv run flake8 deepseek_ocr/ tests/ --max-line-length=88 --extend-ignore=E203,W503 && \
+uv run mypy deepseek_ocr/ && \
+uv run pytest tests/ -v
+```
+
+**必须全部通过（✅）后才能 commit**
+
+#### 2. 文档链接检查
+
+```bash
+# 安装 markdown-link-check（首次）
+npm install -g markdown-link-check
+
+# 检查所有 Markdown 文件的链接
+markdown-link-check README.md --config .github/markdown-link-check-config.json
+markdown-link-check docs/API_REFERENCE.md --config .github/markdown-link-check-config.json
+markdown-link-check docs/BENCHMARKS.md --config .github/markdown-link-check-config.json
+```
+
+**所有链接检查必须通过（✅）后才能 commit**
+
+#### 3. GitHub Actions 本地模拟（可选但强烈推荐）
+
+如果修改了以下内容，建议本地模拟 GitHub Actions workflow：
+- `.github/workflows/` 中的 workflow 文件
+- `README.md` 或 `docs/` 目录
+- 依赖配置（`pyproject.toml`）
+
+### 严格禁止的行为
+
+❌ **绝对不允许**：
+1. 在本地检查未通过的情况下提交代码
+2. 看到 GitHub Actions 失败后不立即修复就继续开发
+3. 连续多次提交导致 GitHub Actions 失败
+4. 使用 `git push --force` 到 main 分支（除非有充分理由）
+
+✅ **正确做法**：
+1. 本地运行所有检查 → 通过 → commit
+2. push 后立即检查 GitHub Actions 状态
+3. 如果 GitHub Actions 失败，立即在本地重现问题并修复
+4. 再次本地验证 → commit → push
+
+### Commit Message 格式
+
+遵循 Conventional Commits 规范：
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Types:**
+- `feat`: 新功能
+- `fix`: 修复 bug
+- `docs`: 文档变更
+- `style`: 代码格式（不影响功能）
+- `refactor`: 重构
+- `test`: 测试相关
+- `chore`: 构建/工具链相关
+
+### 经验教训
+
+**2025-01-05 教训：**
+- Documentation workflow 连续失败 3 次
+- 原因：README.md 中的 API 端点链接未加入忽略列表
+- 根本原因：**没有在本地运行 markdown-link-check 就直接 commit**
+- 解决方案：强制执行本地检查规范（本节内容）
+
+**重要提醒：**
+> 每次 commit 前必须本地验证所有 GitHub Actions 会运行的检查。
+> 不要依赖 GitHub Actions 来发现问题，GitHub Actions 应该只是最后一道验证。
+
 ## Python 类型检查最佳实践
 
 ### 背景
