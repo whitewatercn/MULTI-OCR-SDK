@@ -128,6 +128,34 @@ text = client.parse("statement.pdf", mode="grounding")
 text = client.parse("document.pdf", dpi=300)
 ```
 
+#### Multi-Page PDF Processing
+
+**⚠️ Breaking Change in v0.2.0**: PDF processing now handles **all pages by default**.
+
+```python
+from deepseek_ocr import DeepSeekOCR
+
+client = DeepSeekOCR(
+    api_key="your_api_key",
+    base_url="https://api.siliconflow.cn/v1/chat/completions"
+)
+
+# Process all pages (new default behavior)
+text = client.parse("multi_page.pdf")
+# Returns: Page 1 content\n\n---\n\nPage 2 content\n\n---\n\nPage 3 content
+
+# Process only the first page (old behavior)
+text = client.parse("multi_page.pdf", pages=1)
+
+# Process specific pages (e.g., pages 1, 3, and 5)
+text = client.parse("multi_page.pdf", pages=[1, 3, 5])
+
+# Process a range of pages
+text = client.parse("multi_page.pdf", pages=list(range(1, 6)))  # Pages 1-5
+```
+
+**Note**: Processing multiple pages will increase API usage and costs proportionally. Each page is processed independently with intelligent per-page fallback.
+
 #### Async Usage
 
 ```python
@@ -194,6 +222,7 @@ export DS_OCR_DPI=200
 export DS_OCR_FALLBACK_ENABLED=true
 export DS_OCR_FALLBACK_MODE="grounding"
 export DS_OCR_MIN_OUTPUT_THRESHOLD=500
+export DS_OCR_PAGE_SEPARATOR="\n\n---\n\n"  # Separator between pages in multi-page PDFs
 ```
 
 **Available API Providers**:
@@ -419,6 +448,34 @@ text = client.parse("statement.pdf", mode="grounding")
 text = client.parse("document.pdf", dpi=300)
 ```
 
+#### 多页 PDF 处理
+
+**⚠️ v0.2.0 破坏性变更**：PDF 处理现在**默认处理所有页面**。
+
+```python
+from deepseek_ocr import DeepSeekOCR
+
+client = DeepSeekOCR(
+    api_key="your_api_key",
+    base_url="https://api.siliconflow.cn/v1/chat/completions"
+)
+
+# 处理所有页面（新的默认行为）
+text = client.parse("multi_page.pdf")
+# 返回: 第1页内容\n\n---\n\n第2页内容\n\n---\n\n第3页内容
+
+# 只处理第一页（旧的行为）
+text = client.parse("multi_page.pdf", pages=1)
+
+# 处理特定页面（例如第 1、3、5 页）
+text = client.parse("multi_page.pdf", pages=[1, 3, 5])
+
+# 处理一个范围的页面
+text = client.parse("multi_page.pdf", pages=list(range(1, 6)))  # 第 1-5 页
+```
+
+**注意**：处理多个页面将按比例增加 API 使用量和费用。每个页面都独立处理，并带有智能的逐页回退机制。
+
 #### 异步用法
 
 ```python
@@ -485,6 +542,7 @@ export DS_OCR_DPI=200
 export DS_OCR_FALLBACK_ENABLED=true
 export DS_OCR_FALLBACK_MODE="grounding"
 export DS_OCR_MIN_OUTPUT_THRESHOLD=500
+export DS_OCR_PAGE_SEPARATOR="\n\n---\n\n"  # Separator between pages in multi-page PDFs
 ```
 
 **可用的 API 提供商**：
