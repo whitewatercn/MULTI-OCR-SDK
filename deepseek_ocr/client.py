@@ -119,8 +119,19 @@ class DeepSeekOCR:
         # Track last request time for rate limiting
         self._last_request_time: Optional[float] = None
         # Locks to ensure thread-safe and async-safe rate limiting
-        self._async_lock = asyncio.Lock()
+        self._async_lock: Optional[asyncio.Lock] = None
         self._sync_lock = threading.Lock()
+
+    def _get_async_lock(self) -> asyncio.Lock:
+        """
+        Get or create the async lock for rate limiting.
+
+        Lazy initialization to avoid issues when client is created
+        outside an event loop.
+        """
+        if self._async_lock is None:
+            self._async_lock = asyncio.Lock()
+        return self._async_lock
 
     async def _apply_rate_limit_async(self) -> None:
         """
@@ -131,7 +142,7 @@ class DeepSeekOCR:
         in concurrent async operations.
         """
         if self.config.request_delay > 0:
-            async with self._async_lock:
+            async with self._get_async_lock():
                 if self._last_request_time is not None:
                     elapsed = time.time() - self._last_request_time
                     if elapsed < self.config.request_delay:

@@ -2,6 +2,7 @@
 Tests for rate limiting functionality.
 """
 
+import asyncio
 import time
 from typing import Awaitable, Callable
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -301,8 +302,6 @@ async def test_concurrent_async_requests_rate_limiting():
         start_time = time.time()
 
         # Make 3 concurrent requests
-        import asyncio
-
         results = await asyncio.gather(
             client._make_api_request_async("img1", "prompt"),
             client._make_api_request_async("img2", "prompt"),
@@ -351,8 +350,6 @@ async def test_concurrent_requests_with_multipage_pdf():
     with patch("aiohttp.ClientSession", MockSession):
         # Simulate processing 4 pages concurrently (like parse_async does)
         start_time = time.time()
-
-        import asyncio
 
         # This simulates what happens in parse_async with multiple pages
         tasks = [client._make_api_request_async(f"page{i}", "prompt") for i in range(4)]
