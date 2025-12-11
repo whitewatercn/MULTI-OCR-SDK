@@ -4,6 +4,7 @@ Tests for rate limiting functionality.
 
 import asyncio
 import time
+from typing import Awaitable, Callable
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import aiohttp
@@ -35,6 +36,40 @@ def client_no_retry():
         request_delay=0.5,
         enable_rate_limit_retry=False,
     )
+
+
+def create_mock_session(response_factory: Callable[[], Awaitable]):
+    """
+    Create a mock aiohttp.ClientSession for testing.
+
+    Args:
+        response_factory: Async function that creates mock responses.
+
+    Returns:
+        Mock session class.
+    """
+
+    class MockSession:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args, **kwargs):
+            pass
+
+        def post(self, *args, **kwargs):
+            class PostContextManager:
+                async def __aenter__(self):
+                    return await response_factory()
+
+                async def __aexit__(self, *args, **kwargs):
+                    pass
+
+            return PostContextManager()
+
+    return MockSession
 
 
 def test_rate_limit_config_validation():
@@ -88,25 +123,7 @@ async def test_request_delay_async(client):
         )
         return mock_resp
 
-    class MockSession:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *args, **kwargs):
-            pass
-
-        def post(self, *args, **kwargs):
-            class PostContextManager:
-                async def __aenter__(self):
-                    return await create_mock_response()
-
-                async def __aexit__(self, *args, **kwargs):
-                    pass
-
-            return PostContextManager()
+    MockSession = create_mock_session(create_mock_response)
 
     with patch("aiohttp.ClientSession", MockSession):
         start_time = time.time()
@@ -145,25 +162,7 @@ async def test_rate_limit_retry_async(client):
             )
         return mock_resp
 
-    class MockSession:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *args, **kwargs):
-            pass
-
-        def post(self, *args, **kwargs):
-            class PostContextManager:
-                async def __aenter__(self):
-                    return await create_mock_response()
-
-                async def __aexit__(self, *args, **kwargs):
-                    pass
-
-            return PostContextManager()
+    MockSession = create_mock_session(create_mock_response)
 
     with patch("aiohttp.ClientSession", MockSession):
         start_time = time.time()
@@ -221,25 +220,7 @@ async def test_rate_limit_no_retry_async(client_no_retry):
         mock_resp.text = AsyncMock(return_value="Rate limit exceeded")
         return mock_resp
 
-    class MockSession:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *args, **kwargs):
-            pass
-
-        def post(self, *args, **kwargs):
-            class PostContextManager:
-                async def __aenter__(self):
-                    return await create_mock_response()
-
-                async def __aexit__(self, *args, **kwargs):
-                    pass
-
-            return PostContextManager()
+    MockSession = create_mock_session(create_mock_response)
 
     with patch("aiohttp.ClientSession", MockSession):
         with pytest.raises(RateLimitError) as exc_info:
@@ -273,25 +254,7 @@ async def test_rate_limit_exhausted_retries_async(client):
         mock_resp.text = AsyncMock(return_value="Rate limit exceeded")
         return mock_resp
 
-    class MockSession:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *args, **kwargs):
-            pass
-
-        def post(self, *args, **kwargs):
-            class PostContextManager:
-                async def __aenter__(self):
-                    return await create_mock_response()
-
-                async def __aexit__(self, *args, **kwargs):
-                    pass
-
-            return PostContextManager()
+    MockSession = create_mock_session(create_mock_response)
 
     with patch("aiohttp.ClientSession", MockSession):
         with pytest.raises(RateLimitError) as exc_info:
