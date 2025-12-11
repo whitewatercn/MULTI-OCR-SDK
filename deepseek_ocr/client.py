@@ -400,7 +400,8 @@ class DeepSeekOCR:
                             )
                             logger.warning(
                                 f"Rate limit hit (429), retrying in {retry_delay:.1f}s "
-                                f"(attempt {attempt + 1}/{self.config.max_rate_limit_retries})"
+                                f"(attempt {attempt + 1}/"
+                                f"{self.config.max_rate_limit_retries})"
                             )
                             await asyncio.sleep(retry_delay)
                             # Will retry in next iteration
