@@ -197,6 +197,42 @@ async def batch_example():
     summary.print_summary()
 
 asyncio.run(batch_example())
+
+### Vision-Language Model (VLM) Client
+
+The SDK includes a lightweight VLM client for multimodal chat completions.
+It follows an OpenAI-compatible chat completions interface where you can
+send both images and text as a single message. Use it like:
+
+```python
+from deepseek_ocr import vlm
+
+client = vlm.VLM(
+    api_key="your_api_key",
+    base_url="http://localhost:8000/v1",  # Replace with your provider's base URL
+)
+
+result = client.chat.completions.create(
+    model="Qwen3-VL-8B",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "image_url",
+                    "image_url": {"url": "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20241022/emyrja/dog_and_girl.jpeg"},
+                },
+                {"type": "text", "text": "What is happening in this image?"},
+            ],
+        }
+    ],
+)
+
+print(result["choices"][0]["message"]["content"])
+```
+
+This client also supports async calls via `create_async`.
+
 ```
 
 ### Mode Selection Guide
@@ -223,6 +259,14 @@ export DS_OCR_FALLBACK_ENABLED=true
 export DS_OCR_FALLBACK_MODE="grounding"
 export DS_OCR_MIN_OUTPUT_THRESHOLD=500
 export DS_OCR_PAGE_SEPARATOR="\n\n---\n\n"  # Separator between pages in multi-page PDFs
+
+# VLM Configuration (NEW)
+export VLM_API_KEY="your_vlm_api_key"  # Defaults to DS_OCR_API_KEY if not set
+export VLM_BASE_URL="https://api.siliconflow.cn/v1/chat/completions"  # Defaults to DS_OCR_BASE_URL if not set
+export VLM_MODEL_NAME="Qwen3-VL-8B"
+export VLM_TIMEOUT=60
+export VLM_MAX_TOKENS=4000
+export VLM_TEMPERATURE=0.0
 
 # Rate Limiting Configuration (NEW)
 export DS_OCR_REQUEST_DELAY=0.0  # Delay in seconds between requests (0 = no delay)
@@ -610,6 +654,40 @@ async def batch_example():
     summary.print_summary()
 
 asyncio.run(batch_example())
+
+### 视觉-语言模型（VLM）客户端
+
+SDK 增加了一个轻量级的 VLM 客户端，用于多模态对话式推理。它兼容 OpenAI 风格的 chat completions API，允许在同一条消息中发送图像和文本：
+
+```python
+from deepseek_ocr import vlm
+
+client = vlm.VLM(
+    api_key="your_api_key",
+    base_url="http://localhost:8000/v1",  # 替换为您的 API 提供商地址
+)
+
+result = client.chat.completions.create(
+    model="Qwen3-VL-8B",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "image_url",
+                    "image_url": {"url": "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20241022/emyrja/dog_and_girl.jpeg"},
+                },
+                {"type": "text", "text": "图中描绘的是什么景象?"},
+            ],
+        }
+    ],
+)
+
+print(result["choices"][0]["message"]["content"])
+```
+
+还可使用 `create_async` 进行异步调用。
+
 ```
 
 ### 模式选择指南
@@ -636,6 +714,14 @@ export DS_OCR_FALLBACK_ENABLED=true
 export DS_OCR_FALLBACK_MODE="grounding"
 export DS_OCR_MIN_OUTPUT_THRESHOLD=500
 export DS_OCR_PAGE_SEPARATOR="\n\n---\n\n"  # Separator between pages in multi-page PDFs
+
+# VLM 配置（新增）
+export VLM_API_KEY="your_vlm_api_key"  # 如果未设置，默认使用 DS_OCR_API_KEY
+export VLM_BASE_URL="https://api.siliconflow.cn/v1/chat/completions"  # 如果未设置，默认使用 DS_OCR_BASE_URL
+export VLM_MODEL_NAME="Qwen3-VL-8B"
+export VLM_TIMEOUT=60
+export VLM_MAX_TOKENS=4000
+export VLM_TEMPERATURE=0.0
 
 # 速率限制配置（新增）
 export DS_OCR_REQUEST_DELAY=0.0  # 请求之间的延迟秒数（0 = 无延迟）

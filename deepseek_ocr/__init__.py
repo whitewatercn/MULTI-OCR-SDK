@@ -30,6 +30,8 @@ from .exceptions import (
     RateLimitError,
     TimeoutError,
 )
+from . import vlm_client
+from .vlm_client import VLM
 
 __version__ = "0.1.0"
 __author__ = "Chengjie"
@@ -46,6 +48,9 @@ __all__ = [
     "BatchProcessor",
     "BatchResult",
     "BatchSummary",
+    # VLM support
+    "vlm_client",
+    "VLM",
     # Exceptions
     "DeepSeekOCRError",
     "ConfigurationError",
