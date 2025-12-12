@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-12-12
+
+### Added
+
+- **API Rate Limiting / Throttling support**
+  - Automatic retry with exponential backoff on HTTP 429 (Too Many Requests)
+  - Configurable `request_delay` parameter for minimum interval between requests
+  - Configurable `max_rate_limit_retries` for retry attempts on 429 errors
+  - Configurable `rate_limit_retry_delay` for initial backoff delay
+  - New `RateLimitError` exception for rate limit handling
+  - Thread-safe and async-safe implementation with proper locking
+- New example: `examples/03_rate_limiting.py`
+- Comprehensive test coverage for rate limiting functionality
+
+### Changed
+
+- Enhanced `DeepSeekOCR` constructor with rate limiting parameters
+- Updated API reference documentation
+
 ## [0.2.0] - 2025-12-07
 
 ### Breaking Changes
