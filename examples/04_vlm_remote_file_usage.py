@@ -11,7 +11,7 @@ from pprint import pprint
 from deepseek_ocr import vlm_client
 
 API_KEY = os.getenv("VLM_API_KEY", "123454")
-BASE_URL = os.getenv("VLM_BASE_URL", "http://10.131.102.25:8000/v1")
+BASE_URL = os.getenv("VLM_BASE_URL", "http://localhost:8000/v1")
 
 client = vlm_client.VLM(api_key=API_KEY, base_url=BASE_URL)
 
