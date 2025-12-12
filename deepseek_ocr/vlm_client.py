@@ -261,7 +261,7 @@ class VLMClient:
         file_path: Union[str, Path],
         prompt: str,
         model: Optional[str] = None,
-        dpi: int = 200,
+        dpi: int = 72,
         pages: Optional[Union[int, List[int]]] = None,
         **kwargs: Any,
     ) -> str:
@@ -272,7 +272,7 @@ class VLMClient:
             file_path: Path to the file.
             prompt: Text prompt for the VLM.
             model: Model name (optional).
-            dpi: DPI for rendering PDF pages (default: 200).
+            dpi: DPI for rendering PDF pages (default: 72).
             pages: Specific pages to process (1-indexed).
             **kwargs: Additional arguments for the API call.
             
@@ -331,7 +331,7 @@ class VLMClient:
         file_path: Union[str, Path],
         prompt: str,
         model: Optional[str] = None,
-        dpi: int = 200,
+        dpi: int = 72,
         pages: Optional[Union[int, List[int]]] = None,
         **kwargs: Any,
     ) -> str:
@@ -342,7 +342,7 @@ class VLMClient:
             file_path: Path to the file.
             prompt: Text prompt for the VLM.
             model: Model name (optional).
-            dpi: DPI for rendering PDF pages (default: 200).
+            dpi: DPI for rendering PDF pages (default: 72).
                  Note: Higher DPI results in larger images and significantly more tokens.
                  If you hit token limits (e.g. "decoder prompt is longer than..."), try reducing DPI (e.g. to 72).
             pages: Specific pages to process (1-indexed).
