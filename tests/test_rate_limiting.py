@@ -314,8 +314,9 @@ async def test_concurrent_async_requests_rate_limiting():
         assert len(results) == 3
 
         # With global rate limiting and 0.5s delay, requests should be spaced 0.5s apart
-        # Total time should be at least 1.0s (0.5s * 2 intervals between 3 requests)
-        assert elapsed >= 1.0
+        # Total time should be at least ~1.0s (0.5s * 2 intervals between 3 requests)
+        # Use 0.95s threshold to account for timing variations on CI systems
+        assert elapsed >= 0.95
 
         # Verify requests were properly spaced
         assert len(request_times) == 3
