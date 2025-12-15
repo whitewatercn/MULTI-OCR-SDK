@@ -196,6 +196,7 @@ class VLMClient:
             Combined text response from all processed pages.
         """
         # Convert file to base64 images using shared utility
+        logger.info(f"Processing {file_path} with dpi={dpi}, pages={pages} (type: {type(pages)})")
         image_b64_result = FileProcessor.file_to_base64(file_path, dpi, pages)
         
         if isinstance(image_b64_result, str):
@@ -203,8 +204,11 @@ class VLMClient:
         else:
             images = image_b64_result
 
+        logger.info(f"Converted to {len(images)} images for processing")
+
         all_texts = []
         for page_idx, image_b64 in enumerate(images):
+            logger.debug(f"Processing page {page_idx + 1}/{len(images)}")
             messages = [
                 {
                     "role": "user",
