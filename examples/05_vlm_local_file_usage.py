@@ -7,7 +7,7 @@ Replace `API_KEY` and `BASE_URL` with your values or set
 
 import os
 from pprint import pprint
-from multi_ocr import VLMClient
+from core import VLMClient
 
 
 API_KEY = os.getenv("VLM_API_KEY", "your_api_key_here")

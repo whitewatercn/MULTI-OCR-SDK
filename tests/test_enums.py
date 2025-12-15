@@ -1,6 +1,6 @@
 """Tests for enums module."""
 
-from multi_ocr import OCRMode
+from core import OCRMode
 
 
 def test_ocr_mode_values():

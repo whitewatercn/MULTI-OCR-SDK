@@ -34,13 +34,13 @@ this repo is based on [DeepSeek-OCR-SDK](https://github.com/BukeLy/DeepSeek-OCR-
 #### Using pip
 
 ```bash
-pip install deepseek-ocr
+pip install multi-ocr-sdk
 ```
 
 #### Using uv (recommended)
 
 ```bash
-uv add deepseek-ocr
+uv add multi-ocr-sdk
 ```
 
 #### Install from source
@@ -491,13 +491,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 #### 使用 pip
 
 ```bash
-pip install deepseek-ocr
+pip install multi-ocr-sdk
 ```
 
-#### 使用 uv（推荐）
+#### 使用 uv (推荐)
 
 ```bash
-uv add deepseek-ocr
+uv add multi-ocr-sdk
 ```
 
 #### 从源码安装

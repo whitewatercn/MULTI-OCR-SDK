@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from multi_ocr import DeepSeekOCR
-from multi_ocr.exceptions import RateLimitError
+from core import DeepSeekOCR
+from core.exceptions import RateLimitError
 
 
 @pytest.fixture

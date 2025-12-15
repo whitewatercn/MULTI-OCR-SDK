@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from multi_ocr import ConfigurationError, OCRConfig
+from core import ConfigurationError, OCRConfig
 
 
 def test_config_from_env_with_api_key():
