@@ -6,7 +6,7 @@ retry logic, and error handling.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import requests
 
