@@ -326,6 +326,43 @@ class DeepSeekOCR:
         text = re.sub(r"<\|det\|>", "", text)
         return text.strip()
 
+    def _save_output(self, text: str, file_path: Union[str, Path]) -> Path:
+        """
+        Save OCR output to markdown file in ocr-output folder.
+
+        Args:
+            text: OCR output text.
+            file_path: Original input file path.
+
+        Returns:
+            Path to the saved markdown file.
+
+        Raises:
+            FileProcessingError: If unable to save the file.
+        """
+        try:
+            # Convert to Path object
+            input_path = Path(file_path)
+            
+            # Create output directory in current working directory
+            output_dir = Path.cwd() / "ocr-output"
+            output_dir.mkdir(exist_ok=True)
+            
+            # Create output filename with .md extension
+            output_filename = input_path.stem + ".md"
+            output_path = output_dir / output_filename
+            
+            # Write the text to file
+            output_path.write_text(text, encoding="utf-8")
+            
+            logger.info(f"Saved OCR output to {output_path}")
+            return output_path
+            
+        except Exception as e:
+            raise FileProcessingError(
+                f"Failed to save output file: {e}"
+            ) from e
+
     async def _make_api_request_async(
         self, image_b64: str, prompt: str
     ) -> Dict[str, Any]:
@@ -531,6 +568,7 @@ class DeepSeekOCR:
         mode: Union[str, OCRMode] = OCRMode.FREE_OCR,
         dpi: Optional[int] = None,
         pages: Optional[Union[int, List[int]]] = None,
+        save: bool = False,
     ) -> str:
         """
         Parse document asynchronously with concurrent page processing
@@ -562,6 +600,8 @@ class DeepSeekOCR:
                    - None: Process all pages (default, BREAKING CHANGE)
                    - int: Process single page (1-indexed)
                    - list: Process specific pages (1-indexed)
+            save: If True, save the result as a markdown file in the
+                  ocr-output folder with the same filename as the input file.
 
         Returns:
             Extracted text in Markdown format. For multi-page documents,
@@ -698,6 +738,11 @@ class DeepSeekOCR:
             f"Successfully processed {file_path}: "
             f"{len(images)} page(s), {len(combined_text)} chars"
         )
+        
+        # Save to file if requested
+        if save:
+            self._save_output(combined_text, file_path)
+        
         return combined_text
 
     def parse(
@@ -706,6 +751,7 @@ class DeepSeekOCR:
         mode: Union[str, OCRMode] = OCRMode.FREE_OCR,
         dpi: Optional[int] = None,
         pages: Optional[Union[int, List[int]]] = None,
+        save: bool = False,
     ) -> str:
         """
         Parse document synchronously with per-page fallback.
@@ -736,6 +782,8 @@ class DeepSeekOCR:
                    - None: Process all pages (default, BREAKING CHANGE)
                    - int: Process single page (1-indexed)
                    - list: Process specific pages (1-indexed)
+            save: If True, save the result as a markdown file in the
+                  ocr-output folder with the same filename as the input file.
 
         Returns:
             Extracted text in Markdown format. For multi-page documents,
@@ -858,4 +906,9 @@ class DeepSeekOCR:
             f"Successfully processed {file_path}: "
             f"{len(images)} page(s), {len(combined_text)} chars"
         )
+        
+        # Save to file if requested
+        if save:
+            self._save_output(combined_text, file_path)
+        
         return combined_text

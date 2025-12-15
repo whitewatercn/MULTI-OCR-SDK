@@ -305,3 +305,142 @@ def test_parse_with_fallback(mock_pdf):
                 assert mock_api.call_count == 2
                 # Should return long fallback result
                 assert len(result) > 500
+
+
+# Tests for save functionality
+
+
+def test_save_output():
+    """Test saving OCR output to markdown file."""
+    client = DeepSeekOCR(api_key="test_key", base_url="http://test.com")
+    
+    test_text = "# Test Document\n\nThis is a test."
+    test_file = Path("/tmp/test_document.pdf")
+    
+    with patch("pathlib.Path.cwd") as mock_cwd:
+        mock_cwd.return_value = Path("/tmp")
+        
+        # Call save method
+        output_path = client._save_output(test_text, test_file)
+        
+        # Check output path is correct
+        assert output_path == Path("/tmp/ocr-output/test_document.md")
+        assert output_path.exists()
+        
+        # Check content is saved correctly
+        saved_content = output_path.read_text(encoding="utf-8")
+        assert saved_content == test_text
+        
+        # Cleanup
+        output_path.unlink()
+        output_path.parent.rmdir()
+
+
+def test_parse_with_save(mock_pdf):
+    """Test parse method with save parameter."""
+    client = DeepSeekOCR(api_key="test_key", base_url="http://test.com")
+    
+    # Disable fallback for this test
+    client.config.fallback_enabled = False
+    
+    # Mock API response
+    mock_response = {
+        "choices": [{"message": {"content": "Test content"}}],
+        "usage": {"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150},
+    }
+    
+    with patch("fitz.open", return_value=mock_pdf):
+        with patch("pathlib.Path.exists", return_value=True):
+            with patch.object(
+                client, "_make_api_request_sync", return_value=mock_response
+            ):
+                with patch("pathlib.Path.cwd") as mock_cwd:
+                    mock_cwd.return_value = Path("/tmp")
+                    
+                    # Parse with save=True
+                    result = client.parse(Path("test.pdf"), pages=1, save=True)
+                    
+                    # Check result is returned
+                    assert result == "Test content"
+                    
+                    # Check file is saved
+                    output_path = Path("/tmp/ocr-output/test.md")
+                    assert output_path.exists()
+                    
+                    # Check content
+                    saved_content = output_path.read_text(encoding="utf-8")
+                    assert saved_content == "Test content"
+                    
+                    # Cleanup
+                    output_path.unlink()
+                    output_path.parent.rmdir()
+
+
+@pytest.mark.asyncio
+async def test_parse_async_with_save(mock_pdf):
+    """Test parse_async method with save parameter."""
+    client = DeepSeekOCR(api_key="test_key", base_url="http://test.com")
+    
+    # Disable fallback for this test
+    client.config.fallback_enabled = False
+    
+    # Mock API response
+    mock_response = {
+        "choices": [{"message": {"content": "Test async content"}}],
+        "usage": {"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150},
+    }
+    
+    with patch("fitz.open", return_value=mock_pdf):
+        with patch("pathlib.Path.exists", return_value=True):
+            with patch.object(
+                client, "_make_api_request_async", return_value=mock_response
+            ):
+                with patch("pathlib.Path.cwd") as mock_cwd:
+                    mock_cwd.return_value = Path("/tmp")
+                    
+                    # Parse with save=True
+                    result = await client.parse_async(Path("test.pdf"), pages=1, save=True)
+                    
+                    # Check result is returned
+                    assert result == "Test async content"
+                    
+                    # Check file is saved
+                    output_path = Path("/tmp/ocr-output/test.md")
+                    assert output_path.exists()
+                    
+                    # Check content
+                    saved_content = output_path.read_text(encoding="utf-8")
+                    assert saved_content == "Test async content"
+                    
+                    # Cleanup
+                    output_path.unlink()
+                    output_path.parent.rmdir()
+
+
+def test_parse_without_save(mock_pdf):
+    """Test parse method with save=False (default)."""
+    client = DeepSeekOCR(api_key="test_key", base_url="http://test.com")
+    
+    # Disable fallback for this test
+    client.config.fallback_enabled = False
+    
+    # Mock API response
+    mock_response = {
+        "choices": [{"message": {"content": "Test content"}}],
+        "usage": {"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150},
+    }
+    
+    with patch("fitz.open", return_value=mock_pdf):
+        with patch("pathlib.Path.exists", return_value=True):
+            with patch.object(
+                client, "_make_api_request_sync", return_value=mock_response
+            ):
+                with patch.object(client, "_save_output") as mock_save:
+                    # Parse with save=False (default)
+                    result = client.parse(Path("test.pdf"), pages=1)
+                    
+                    # Check result is returned
+                    assert result == "Test content"
+                    
+                    # Check _save_output was NOT called
+                    mock_save.assert_not_called()
