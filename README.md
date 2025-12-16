@@ -282,8 +282,9 @@ source .venv/bin/activate  # Linux/Mac
 uv run pytest
 ```
 
-#### 代码质量（暂不可用）
+#### 代码质量
 
+> ⚠️ 以下命令暂时不可用，因依赖尚未完善，预计将在未来版本中支持。
 ```bash
 # 格式化代码
 uv run black multi_ocr_sdk/
