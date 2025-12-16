@@ -1,9 +1,5 @@
 """
-Vision-Language Model (VLM) client for OCR SDK.
-
-This module provides a lightweight client wrapper for calling VLM-style
-chat completions (image + text). It mirrors the design patterns used by
-the existing OCR client to reuse configuration and rate-limit behavior.
+该模块提供一个SDK，用于调用 VLM 完成 OCR。
 """
 
 from __future__ import annotations
@@ -21,24 +17,26 @@ from .basic_utils import FileProcessor, RateLimiter, APIRequester
 
 logger = logging.getLogger(__name__)
 
-
+# 20251216开始人工审阅
 @dataclass
 class VLMConfig:
+    # 规定有哪些参数，以及这些参数的数据类型、默认值
     api_key: str
     base_url: str
-    model_name: str = "Qwen3-VL-8B"
+    model_name: str
     timeout: int = 60
-    max_tokens: int = 8000 #qwen3-vl-8b支持8k上下文，此处设置为8000
-    temperature: float = 0.0
-    request_delay: float = 0.0
-    enable_rate_limit_retry: bool = True
-    max_rate_limit_retries: int = 3
-    rate_limit_retry_delay: float = 5.0
+    max_tokens: int = 8192 #一般的模型最大传入token为8k，此处设置为8192
+    temperature: float = 0.0 # 温度越小，幻觉越少，OCR场景的温度设置为0
+    request_delay: float = 0.0 # 两次请求之间的间隔，如果达到了访问上限，这个值可以调高一些
+    enable_rate_limit_retry: bool = True # 如果遇到429报错（限流）是否重试
+    max_rate_limit_retries: int = 3 # 最大重试次数
+    rate_limit_retry_delay: float = 5.0 # 重试的间隔
 
     @classmethod
     def from_env(cls, **overrides: Any) -> "VLMConfig":
-        """Create configuration from environment variables with overrides."""
-        # Helper to get env var with type conversion
+        """
+        读取环境变量并创建配置实例VLMConfig，之后这个实例会被VLMClient使用。
+        """
         def get_env(key: str, default: Any = None, type_func: Any = str) -> Any:
             val = os.getenv(key)
             if val is None:
@@ -47,7 +45,8 @@ class VLMConfig:
                 return val.lower() in ("true", "1", "yes", "on")
             return type_func(val)
 
-        # Load from environment variables
+
+        # 加载环境变量
         env_config = {
             "api_key": get_env("VLM_API_KEY"),
             "base_url": get_env("VLM_BASE_URL"),
@@ -61,26 +60,22 @@ class VLMConfig:
             "rate_limit_retry_delay": get_env("VLM_RATE_LIMIT_RETRY_DELAY", type_func=float),
         }
 
-        # Remove None values so defaults in __init__ apply
+        # 删除环境变量里没有指定的项，使用前面设置好的默认值
         env_config = {k: v for k, v in env_config.items() if v is not None}
         
-        # Apply overrides
+        # 将加载好的环境变量覆盖传入的参数（如果没有覆盖，还用的是前面设置好的默认值）
         env_config.update({k: v for k, v in overrides.items() if v is not None})
-        
-        # Handle required fields that might still be missing
-        if "api_key" not in env_config:
-            # Fallback to DS_OCR_API_KEY if VLM_API_KEY not set (backward compatibility/convenience)
-            env_config["api_key"] = os.getenv("DS_OCR_API_KEY", "")
-            
-        if "base_url" not in env_config:
-             # Fallback to DS_OCR_BASE_URL if VLM_BASE_URL not set
-            env_config["base_url"] = os.getenv("DS_OCR_BASE_URL", "")
 
         return cls(**env_config)
 
     def __post_init__(self) -> None:
+        """
+        验证配置参数的有效性，如果配置参数无效，提示用户修改
+        """
         if not self.api_key:
             raise ConfigurationError("VLM API key is required.")
+        if not self.model_name:
+            raise ConfigurationError("VLM model_name is required.")
         if not self.base_url:
             raise ConfigurationError("VLM base_url is required.")
         if self.timeout <= 0:
@@ -92,8 +87,7 @@ class VLMConfig:
         if self.rate_limit_retry_delay < 0:
             raise ConfigurationError("rate_limit_retry_delay must be >= 0")
 
-        # Auto-fix base_url if it looks like a root URL (OpenAI style)
-        # Many users might provide ".../v1" expecting the client to append "/chat/completions"
+        # 规范化 base_url，确保它指向正确的端点 xxx.com/v1/chat/completions
         if self.base_url.endswith("/v1"):
             self.base_url = f"{self.base_url}/chat/completions"
         elif self.base_url.endswith("/v1/"):
@@ -101,6 +95,9 @@ class VLMConfig:
 
 
 class _CompletionsAPI:
+    """
+    这是干嘛的？没看懂 #question
+    """ 
     def __init__(self, client: "VLMClient") -> None:
         self._client = client
 
@@ -110,17 +107,16 @@ class _CompletionsAPI:
 
 
 class _ChatAPI:
+    """
+    这是干嘛的？没看懂  #question
+    """
     def __init__(self, client: "VLMClient") -> None:
         self.completions = _CompletionsAPI(client)
 
 
 class VLMClient:
-    """Lightweight VLM client with rate limiting and retry support.
-
-    Usage:
-        from multi_ocr_sdk import vlm
-        client = vlm.VLMClient(api_key="xxx", base_url="https://...")
-        result = client.chat.completions.create(model="Qwen3-VL-8B", messages=[...])
+    """
+    构建一个VLM client，用于OCR
     """
 
     def __init__(
@@ -137,7 +133,7 @@ class VLMClient:
         rate_limit_retry_delay: Optional[float] = None,
         **overrides: Any,
     ) -> None:
-        # Build config from provided arguments and env if set
+        # 设置client要使用的变量
         config_args = {
             "api_key": api_key,
             "base_url": base_url,
@@ -154,7 +150,7 @@ class VLMClient:
         
         self.config = VLMConfig.from_env(**config_args)
         
-        # Initialize shared utilities
+        # 初始化 RateLimiter 和 APIRequester
         self._rate_limiter = RateLimiter(
             request_delay=self.config.request_delay,
             max_retries=self.config.max_rate_limit_retries,
@@ -162,7 +158,7 @@ class VLMClient:
         )
         self._api_requester = APIRequester(self._rate_limiter, self.config.timeout)
 
-        # Provide a chat API surface similar to other SDKs
+        # 初始化 Chat API（用于发送消息和接收回复）
         self.chat = _ChatAPI(self)
 
     def parse(
@@ -170,31 +166,19 @@ class VLMClient:
         file_path: Union[str, Path],
         prompt: str,
         model: Optional[str] = None,
-        dpi: int = 72,
+        dpi: int = 72, # 默认72dpi，如果过高，token会超限，如果过低图片会变模糊，OCR效果会变差
         pages: Optional[Union[int, List[int]]] = None,
         timeout: Optional[int] = None,
         **kwargs: Any,
     ) -> str:
         """
-        Process a local file (PDF or image) with VLM synchronously.
-        
-        Args:
-            file_path: Path to the file.
-            prompt: Text prompt for the VLM.
-            model: Model name (optional).
-            dpi: DPI for rendering PDF pages (default: 72).
-                 Note: Higher DPI results in larger images and significantly more tokens.
-                 If you hit token limits (e.g. "decoder prompt is longer than..."), try reducing DPI (e.g. to 72).
-            pages: Specific pages to process (1-indexed).
-            **kwargs: Additional arguments for the API call.
-            
-        Returns:
-            Combined text response from all processed pages.
+        这个函数直接使用VLMclient对文件进行OCR识别。
         """
-        # Convert file to base64 images using shared utility
+        # 将文件转换为base64编码的图像
         logger.info(f"Processing {file_path} with dpi={dpi}, pages={pages} (type: {type(pages)})")
         image_b64_result = FileProcessor.file_to_base64(file_path, dpi, pages)
-        
+
+        # 处理单页和多页的情况
         if isinstance(image_b64_result, str):
             images = [image_b64_result]
         else:
@@ -202,9 +186,12 @@ class VLMClient:
 
         logger.info(f"Converted to {len(images)} images for processing")
 
+        # 新建一个空列表，用于存储每一页的OCR结果
         all_texts = []
         for page_idx, image_b64 in enumerate(images):
             logger.debug(f"Processing page {page_idx + 1}/{len(images)}")
+
+            # 构建消息内容，包含图像和prompt
             messages = [
                 {
                     "role": "user",
@@ -218,6 +205,7 @@ class VLMClient:
                 }
             ]
             
+            # 调用VLM的chat completions接口，获取OCR结果
             result = self.chat.completions.create(
                 model=model or self.config.model_name,
                 messages=messages,
@@ -225,6 +213,7 @@ class VLMClient:
                 **kwargs
             )
             
+            # 如果返回结果中包含文本，提取出来并添加到结果列表中
             if "choices" in result and len(result["choices"]) > 0:
                 text = str(result["choices"][0]["message"]["content"])
                 all_texts.append(text)
@@ -233,10 +222,15 @@ class VLMClient:
 
         return "\n\n---\n\n".join(all_texts)
 
+
+
+    # 设置限流功能（这是个异步并发时才用到的功能吗？） #question
     def _apply_rate_limit_sync(self) -> None:
         self._rate_limiter.apply_rate_limit_sync()
 
+
     def _make_api_request_sync(self, model: str, messages: List[Dict[str, Any]], timeout: Optional[int] = None, **kwargs: Any) -> Dict[str, Any]:
+        # 构建请求头（包含apikey）和请求体（包含模型名称、消息内容等）
         headers = {
             "Authorization": f"Bearer {self.config.api_key}",
             "Content-Type": "application/json",
@@ -256,5 +250,11 @@ class VLMClient:
             timeout_override=timeout,
         )
 
-
+"""
+__all__ 是模块级的导出列表，表示该模块的“公共 API”。
+把 ["VLMClient", "VLMConfig"] 放在 __all__ 中意味着：当别人写 from multi_ocr_sdk.vlm_client import * 时，只会导入 VLMClient 和 VLMConfig。
+它也作为 API 意图的声明（告诉用户和文档/IDE 哪些名字是公开的）。
+注意：这不是访问控制，仍然可以显式地 from multi_ocr_sdk.vlm_client import _CompletionsAPI 或 import multi_ocr_sdk.vlm_client as m 后访问内部符号。
+"""
 __all__ = ["VLMClient", "VLMConfig"]
+# 20251216人工审阅结束
