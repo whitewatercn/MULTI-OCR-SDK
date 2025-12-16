@@ -13,7 +13,7 @@ from pprint import pprint
 
 from multi_ocr_sdk import VLMClient
 
-API_KEY = os.getenv("VLM_API_KEY", "123454")
+API_KEY = os.getenv("VLM_API_KEY", "your_api_key_here")
 BASE_URL = os.getenv("VLM_BASE_URL", "http://localhost:8000/v1")
 
 client = VLMClient(api_key=API_KEY, base_url=BASE_URL)
