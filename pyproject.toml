@@ -45,10 +45,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/whitewatercn/MULTI-OCR-SDK"
-Documentation = "https://github.com/whitewatercn/MULTI-OCR-SDK#readme"
-Repository = "https://github.com/whitewatercn/MULTI-OCR-SDK"
-Issues = "https://github.com/whitewatercn/MULTI-OCR-SDK/issues"
+Homepage = "https://github.com/B-Beginner/MULTI-OCR-SDK"
+Documentation = "https://github.com/B-Beginner/MULTI-OCR-SDK#readme"
+Repository = "https://github.com/B-Beginner/MULTI-OCR-SDK"
+Issues = "https://github.com/B-Beginner/MULTI-OCR-SDK/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
