@@ -45,6 +45,8 @@ htmlcov/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+develop_test/
+
 
 # Environment variables
 .env

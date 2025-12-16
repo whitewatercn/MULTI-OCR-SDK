@@ -3,16 +3,16 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "deepseek-ocr"
-version = "0.3.0"
-description = "A simple and efficient Python SDK for DeepSeek-OCR API"
+name = "multi-ocr-sdk"
+version = "0.4.4"
+description = "A simple and efficient Python SDK for multi OCR API, such as deepseek OCR, VLM(qwenvl)."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 authors = [
-    {name = "Chengjie", email = "buledream233@gmail.com"}
+    {name = "whitewatercn", email = "whitewatercn@outlook.com"}
 ]
-keywords = ["ocr", "deepseek", "document-processing", "pdf", "image-to-text"]
+keywords = ["ocr", "deepseek", "document-processing", "pdf", "image-to-text","vlm"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -45,14 +45,14 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/BukeLy/DeepSeek-OCR-SDK"
-Documentation = "https://github.com/BukeLy/DeepSeek-OCR-SDK#readme"
-Repository = "https://github.com/BukeLy/DeepSeek-OCR-SDK"
-Issues = "https://github.com/BukeLy/DeepSeek-OCR-SDK/issues"
+Homepage = "https://github.com/B-Beginner/MULTI-OCR-SDK"
+Documentation = "https://github.com/B-Beginner/MULTI-OCR-SDK#readme"
+Repository = "https://github.com/B-Beginner/MULTI-OCR-SDK"
+Issues = "https://github.com/B-Beginner/MULTI-OCR-SDK/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["deepseek_ocr*"]
+include = ["multi_ocr_sdk*"]
 
 [tool.black]
 line-length = 88

@@ -1,19 +1,13 @@
-"""
-Configuration management for DeepSeek OCR SDK.
-
-This module provides configuration management with support for
-environment variables and explicit parameters.
-"""
-
 import os
 from dataclasses import dataclass
-from typing import Optional, cast
+from typing import Any, Optional
 
+from .basic_utils.base_config import BaseConfig
 from .exceptions import ConfigurationError
 
 
 @dataclass
-class OCRConfig:
+class OCRConfig(BaseConfig):
     """
     Configuration for DeepSeek OCR client.
 
