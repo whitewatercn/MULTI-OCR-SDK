@@ -22,15 +22,14 @@ else:
     print(f"Processing file: {file_path}")
     
     try:
-        # Use the high-level parse method
-        # This handles PDF conversion, multi-page processing, and merging results
-        # Note: Reducing DPI to 72 (or lower) to avoid exceeding token limits for large PDFs
         result = client.parse(
             file_path=file_path,
             prompt="你是一个ocr机器人，识别输入的文件内容，输出为markdown格式，尽可能保留图表等格式信息，你不需要评论概括文件内容，只需要输出就行",
             model="Qwen3-VL-8B",
             timeout=100,
-            dpi=72  # Use at least 72 DPI for reasonable OCR quality (as suggested above)
+            dpi=60,  # dpi建议60-80。dpi越高识别效果越好，但也越容易超出模型的token限制
+            concurrency_num=5,  # 并发处理一个pdf里的5个页面
+            max_tokens=8000  #每个模型支持的最大token数不同，不要设为模型上限，因为 prompt 也占 token；如果模型上限是8192，建议max_token略小一些，留出冗余给文字prompt，比如此处设为8000
         )
 
         print("\n--- Result ---")

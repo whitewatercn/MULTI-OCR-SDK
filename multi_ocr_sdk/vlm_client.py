@@ -9,6 +9,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .exceptions import (
     ConfigurationError,
@@ -17,7 +18,7 @@ from .basic_utils import FileProcessor, RateLimiter, APIRequester
 
 logger = logging.getLogger(__name__)
 
-# 20251216开始人工审阅
+# 20251219开始人工审阅
 @dataclass
 class VLMConfig:
     # 规定有哪些参数，以及这些参数的数据类型、默认值
@@ -25,12 +26,13 @@ class VLMConfig:
     base_url: str
     model_name: str
     timeout: int = 60
-    max_tokens: int = 8192 #一般的模型最大传入token为8k，此处设置为8192
+    max_tokens: int = 8000 #一般的模型最大传入token为8192，此处设置为8000
     temperature: float = 0.0 # 温度越小，幻觉越少，OCR场景的温度设置为0
     request_delay: float = 0.0 # 两次请求之间的间隔，如果达到了访问上限，这个值可以调高一些
     enable_rate_limit_retry: bool = True # 如果遇到429报错（限流）是否重试
     max_rate_limit_retries: int = 3 # 最大重试次数
     rate_limit_retry_delay: float = 5.0 # 重试的间隔
+    concurrency_num: int = 1 # 并发数
 
     @classmethod
     def from_env(cls, **overrides: Any) -> "VLMConfig":
@@ -57,6 +59,7 @@ class VLMConfig:
             "request_delay": get_env("VLM_REQUEST_DELAY", type_func=float),
             "enable_rate_limit_retry": get_env("VLM_ENABLE_RATE_LIMIT_RETRY", type_func=bool),
             "max_rate_limit_retries": get_env("VLM_MAX_RATE_LIMIT_RETRIES", type_func=int),
+            "concurrency_num": get_env("VLM_CONCURRENCY_NUM", type_func=int),
             "rate_limit_retry_delay": get_env("VLM_RATE_LIMIT_RETRY_DELAY", type_func=float),
         }
 
@@ -84,6 +87,8 @@ class VLMConfig:
             raise ConfigurationError("request_delay must be >= 0")
         if self.max_rate_limit_retries < 0:
             raise ConfigurationError("max_rate_limit_retries must be >= 0")
+        if self.concurrency_num < 1:
+            raise ConfigurationError("concurrency_num must be >= 1")
         if self.rate_limit_retry_delay < 0:
             raise ConfigurationError("rate_limit_retry_delay must be >= 0")
 
@@ -128,9 +133,7 @@ class VLMClient:
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         request_delay: Optional[float] = None,
-        enable_rate_limit_retry: Optional[bool] = None,
-        max_rate_limit_retries: Optional[int] = None,
-        rate_limit_retry_delay: Optional[float] = None,
+        concurrency_num: Optional[int] = None,
         **overrides: Any,
     ) -> None:
         # 设置client要使用的变量
@@ -142,9 +145,11 @@ class VLMClient:
             "max_tokens": max_tokens,
             "temperature": temperature,
             "request_delay": request_delay,
-            "enable_rate_limit_retry": enable_rate_limit_retry,
-            "max_rate_limit_retries": max_rate_limit_retries,
-            "rate_limit_retry_delay": rate_limit_retry_delay,
+            # "enable_rate_limit_retry": enable_rate_limit_retry,
+            # "max_rate_limit_retries": max_rate_limit_retries,
+            # "rate_limit_retry_delay": rate_limit_retry_delay,
+            "concurrency_num": concurrency_num
+
         }
         config_args.update(overrides)
         
@@ -161,6 +166,48 @@ class VLMClient:
         # 初始化 Chat API（用于发送消息和接收回复）
         self.chat = _ChatAPI(self)
 
+    def _process_single_page(
+        self,
+        image_b64: str,
+        prompt: str,
+        model: Optional[str] = None,
+        timeout: Optional[int] = None,
+        max_tokens: Optional[int] = None,
+        **kwargs: Any,
+    ) -> str:
+        # 构建消息内容，包含图像和prompt
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/png;base64,{image_b64}"},
+                    },
+                    {"type": "text", "text": prompt},
+                ],
+            }
+        ]
+        
+        # 调用VLM的chat completions接口，获取OCR结果
+        # 将 max_tokens 显式地传递给 API 调用（如果提供）
+        call_kwargs = dict(kwargs)
+        if max_tokens is not None:
+            call_kwargs["max_tokens"] = max_tokens
+
+        result = self.chat.completions.create(
+            model=model or self.config.model_name,
+            messages=messages,
+            timeout=timeout,
+            **call_kwargs
+        )
+        
+        # 如果返回结果中包含文本，提取出来并添加到结果列表中
+        if "choices" in result and len(result["choices"]) > 0:
+            return str(result["choices"][0]["message"]["content"])
+        else:
+            return ""
+
     def parse(
         self,
         file_path: Union[str, Path],
@@ -169,6 +216,8 @@ class VLMClient:
         dpi: int = 72, # 默认72dpi，如果过高，token会超限，如果过低图片会变模糊，OCR效果会变差
         pages: Optional[Union[int, List[int]]] = None,
         timeout: Optional[int] = None,
+        concurrency_num: Optional[int] = None,
+        max_tokens: Optional[int] = None,
         **kwargs: Any,
     ) -> str:
         """
@@ -186,39 +235,55 @@ class VLMClient:
 
         logger.info(f"Converted to {len(images)} images for processing")
 
-        # 新建一个空列表，用于存储每一页的OCR结果
-        all_texts = []
-        for page_idx, image_b64 in enumerate(images):
-            logger.debug(f"Processing page {page_idx + 1}/{len(images)}")
+        # 确定并发数
+        actual_concurrency = concurrency_num or self.config.concurrency_num
+        if actual_concurrency < 1:
+            actual_concurrency = 1
 
-            # 构建消息内容，包含图像和prompt
-            messages = [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:image/png;base64,{image_b64}"},
-                        },
-                        {"type": "text", "text": prompt},
-                    ],
+        # 处理每页的 max_tokens（优先级：parse 参数 > client config）
+        actual_max_tokens = max_tokens if max_tokens is not None else self.config.max_tokens
+
+        # 新建一个空列表，用于存储每一页的OCR结果
+        all_texts = [""] * len(images)
+
+        # 如果多页，且设置并发大于1，才启动并发
+        if actual_concurrency > 1 and len(images) > 1: 
+            logger.info(f"Processing {len(images)} pages with concurrency={actual_concurrency}")
+
+            # 创建一个thread池，并提交任务
+            with ThreadPoolExecutor(max_workers=actual_concurrency) as executor:
+                
+                # 创建一个字典，存储每个pdf页面对应的图像base64编码、prompt、model、timeout等参数
+                future_to_idx = {
+                    executor.submit(
+                        self._process_single_page, 
+                        image_b64, 
+                        prompt, 
+                        model, 
+                        timeout,
+                        actual_max_tokens,
+                        **kwargs
+                    ): idx 
+                    for idx, image_b64 in enumerate(images)
                 }
-            ]
-            
-            # 调用VLM的chat completions接口，获取OCR结果
-            result = self.chat.completions.create(
-                model=model or self.config.model_name,
-                messages=messages,
-                timeout=timeout,
-                **kwargs
-            )
-            
-            # 如果返回结果中包含文本，提取出来并添加到结果列表中
-            if "choices" in result and len(result["choices"]) > 0:
-                text = str(result["choices"][0]["message"]["content"])
-                all_texts.append(text)
-            else:
-                all_texts.append("")
+                
+                # 遍历完成的任务，获取每个页面的OCR结果，并存储到all_texts列表中
+                for future in as_completed(future_to_idx):
+                    idx = future_to_idx[future]
+                    try:
+                        logger.debug(f"Processing page {idx + 1}/{len(images)}")
+                        all_texts[idx] = future.result()
+                    except Exception as e:
+                        logger.error(f"Error processing page {idx + 1}: {e}")
+                        all_texts[idx] = "" # 或者抛出异常
+        else:
+
+            # 如果不用并发，顺序处理每一页
+            for page_idx, image_b64 in enumerate(images):
+                logger.debug(f"Processing page {page_idx + 1}/{len(images)}")
+                all_texts[page_idx] = self._process_single_page(
+                    image_b64, prompt, model, timeout, actual_max_tokens, **kwargs
+                )
 
         return "\n\n---\n\n".join(all_texts)
 
@@ -254,7 +319,6 @@ class VLMClient:
 __all__ 是模块级的导出列表，表示该模块的“公共 API”。
 把 ["VLMClient", "VLMConfig"] 放在 __all__ 中意味着：当别人写 from multi_ocr_sdk.vlm_client import * 时，只会导入 VLMClient 和 VLMConfig。
 它也作为 API 意图的声明（告诉用户和文档/IDE 哪些名字是公开的）。
-注意：这不是访问控制，仍然可以显式地 from multi_ocr_sdk.vlm_client import _CompletionsAPI 或 import multi_ocr_sdk.vlm_client as m 后访问内部符号。
 """
 __all__ = ["VLMClient", "VLMConfig"]
-# 20251216人工审阅结束
+# 20251219人工审阅结束
