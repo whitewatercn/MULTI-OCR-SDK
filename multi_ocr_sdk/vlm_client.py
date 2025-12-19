@@ -26,7 +26,8 @@ kw_only=True 是一个 python3.10 及以上版本 dataclass 的参数
 """
 @dataclass(kw_only=True)
 class VLMConfig(BaseConfig):
-    # VLM 特有的字段；常见字段（如 api_key、base_url、timeout 等）由 BaseConfig 提供并校验
+    # 从baseconfig继承了许多参数（如 api_key、base_url、timeout 等），由 BaseConfig 提供并校验
+    # 接下来设置VLM 特有的参数
     model: str
     timeout: int = 60
     temperature: float = 0.0 # 温度越小，幻觉越少，OCR场景的温度设置为0
