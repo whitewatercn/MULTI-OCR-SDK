@@ -53,7 +53,12 @@ API_KEY = "your_api_key_here"
 BASE_URL = "http://your_url/v1/chat/completions"
 file_path = "./examples/example_files/DeepSeek_OCR_paper_mini.pdf" 
 
-client = VLMClient(api_key=API_KEY, base_url=BASE_URL)
+client = VLMClient(
+    api_key='test_api_key', # 必填
+    base_url='http://test.com/v1', # 必填，一般以/v1，或者/v1/completions结尾
+    model='Qwen3-VL-8B', # 必填，模型名
+    enable_log=True # 可选参数，是否启用日志功能
+)
 
 result = client.parse(
     file_path=file_path,
