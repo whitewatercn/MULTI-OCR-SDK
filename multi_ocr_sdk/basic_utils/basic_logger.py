@@ -8,7 +8,6 @@ a FileHandler to the specified logger.
 import os
 import logging
 from datetime import datetime
-from typing import Optional
 
 
 def setup_file_logger(

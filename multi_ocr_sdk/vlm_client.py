@@ -257,8 +257,10 @@ class VLMClient:
                         logger.debug(f"Processing page {idx + 1}/{len(images)}")
                         all_texts[idx] = future.result()
                     except Exception as e:
-                        logger.error(f"Error processing page {idx + 1}: {e}")
-                        all_texts[idx] = "" # 或者抛出异常
+                        logger.exception(
+                            f"Error processing page {idx + 1}; this page will be represented as empty text in the final output: {e}"
+                        )
+                        all_texts[idx] = ""  # 或者抛出异常
         else:
 
             # 如果不用并发，顺序处理每一页
