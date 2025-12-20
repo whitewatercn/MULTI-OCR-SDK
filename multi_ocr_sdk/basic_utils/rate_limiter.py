@@ -25,7 +25,7 @@ class RateLimiter:
         参数说明：
             request_delay: API请求之间的延迟时间（秒）。
             max_retries: 速率限制错误的最大重试次数。
-            retry_delay: 重试前的初始延迟时间（秒）（指数退避
+            retry_delay: 重试前的初始延迟时间（秒）（指数退避）
         """
         self.request_delay = request_delay
         self.max_retries = max_retries
